@@ -6,5 +6,6 @@ var root = new RootCommand("TransIP DNS record CRUD.");
 GlobalOptions.AttachTo(root);
 root.Subcommands.Add(DomainsListCommand.Build());
 root.Subcommands.Add(DnsListCommand.Build());
+root.Subcommands.Add(DnsAddCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

@@ -12,9 +12,21 @@ public static class DnsAddCommand
         {
             Description = "Domain name, e.g. example.nl"
         };
-        var nameOpt = new Option<string>("--name") { Required = true };
-        var typeOpt = new Option<string>("--type") { Required = true };
-        var contentOpt = new Option<string>("--content") { Required = true };
+        var nameOpt = new Option<string>("--name")
+        {
+            Required = true,
+            Description = "Record name (e.g. www, @, subdomain)."
+        };
+        var typeOpt = new Option<string>("--type")
+        {
+            Required = true,
+            Description = "Record type (A, AAAA, CNAME, MX, TXT, ...)."
+        };
+        var contentOpt = new Option<string>("--content")
+        {
+            Required = true,
+            Description = "Record content (e.g. IP address, hostname, text value)."
+        };
         var expireOpt = new Option<int>("--expire")
         {
             DefaultValueFactory = _ => 300,

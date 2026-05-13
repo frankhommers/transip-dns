@@ -12,9 +12,21 @@ public static class DnsUpdateCommand
         {
             Description = "Domain name, e.g. example.nl"
         };
-        var nameOpt = new Option<string>("--name") { Required = true };
-        var typeOpt = new Option<string>("--type") { Required = true };
-        var contentOpt = new Option<string>("--content") { Required = true };
+        var nameOpt = new Option<string>("--name")
+        {
+            Required = true,
+            Description = "Current record name to match."
+        };
+        var typeOpt = new Option<string>("--type")
+        {
+            Required = true,
+            Description = "Current record type to match."
+        };
+        var contentOpt = new Option<string>("--content")
+        {
+            Required = true,
+            Description = "Current record content to match."
+        };
         var newContentOpt = new Option<string?>("--new-content")
         {
             Description = "New content value."

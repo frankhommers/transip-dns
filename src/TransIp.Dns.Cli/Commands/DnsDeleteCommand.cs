@@ -12,9 +12,21 @@ public static class DnsDeleteCommand
         {
             Description = "Domain name, e.g. example.nl"
         };
-        var nameOpt = new Option<string>("--name") { Required = true };
-        var typeOpt = new Option<string>("--type") { Required = true };
-        var contentOpt = new Option<string>("--content") { Required = true };
+        var nameOpt = new Option<string>("--name")
+        {
+            Required = true,
+            Description = "Record name to match."
+        };
+        var typeOpt = new Option<string>("--type")
+        {
+            Required = true,
+            Description = "Record type to match."
+        };
+        var contentOpt = new Option<string>("--content")
+        {
+            Required = true,
+            Description = "Record content to match."
+        };
         var expireOpt = new Option<int?>("--expire")
         {
             Description = "Match exact TTL (only needed for disambiguation)."

@@ -8,5 +8,6 @@ root.Subcommands.Add(DomainsListCommand.Build());
 root.Subcommands.Add(DnsListCommand.Build());
 root.Subcommands.Add(DnsAddCommand.Build());
 root.Subcommands.Add(DnsDeleteCommand.Build());
+root.Subcommands.Add(DnsUpdateCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

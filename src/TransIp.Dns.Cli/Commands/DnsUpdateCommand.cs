@@ -1,0 +1,95 @@
+using System.CommandLine;
+using Apigen.TransIp.Models;
+using TransIp.Dns.Cli.Infrastructure;
+
+namespace TransIp.Dns.Cli.Commands;
+
+public static class DnsUpdateCommand
+{
+    public static Command Build()
+    {
+        var domainArg = new Argument<string>("domain")
+        {
+            Description = "Domain name, e.g. example.nl"
+        };
+        var nameOpt = new Option<string>("--name") { Required = true };
+        var typeOpt = new Option<string>("--type") { Required = true };
+        var contentOpt = new Option<string>("--content") { Required = true };
+        var newContentOpt = new Option<string?>("--new-content")
+        {
+            Description = "New content value."
+        };
+        var newExpireOpt = new Option<int?>("--new-expire")
+        {
+            Description = "New TTL in seconds."
+        };
+
+        var cmd = new Command("update", "Update a DNS record.");
+        cmd.Arguments.Add(domainArg);
+        cmd.Options.Add(nameOpt);
+        cmd.Options.Add(typeOpt);
+        cmd.Options.Add(contentOpt);
+        cmd.Options.Add(newContentOpt);
+        cmd.Options.Add(newExpireOpt);
+
+        cmd.SetAction(async (parse, ct) =>
+        {
+            try
+            {
+                var newContent = parse.GetValue(newContentOpt);
+                var newExpire = parse.GetValue(newExpireOpt);
+                if (newContent is null && newExpire is null)
+                    throw new InvalidOperationException(
+                        "At least one of --new-content or --new-expire must be specified.");
+
+                var auth = AuthOptions.Resolve(
+                    parse.GetValue(GlobalOptions.Login),
+                    parse.GetValue(GlobalOptions.KeyFile),
+                    parse.GetValue(GlobalOptions.Label)!,
+                    readOnly: false,
+                    parse.GetValue(GlobalOptions.Expiration)!);
+                using var api = ClientFactory.Create(auth);
+
+                var domain = parse.GetValue(domainArg)!;
+                var name = parse.GetValue(nameOpt)!;
+                var type = parse.GetValue(typeOpt)!;
+                var content = parse.GetValue(contentOpt)!;
+
+                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain);
+                var entries = DnsEntryReader.Read(response);
+
+                var matches = entries.Where(e =>
+                    e.Name == name &&
+                    string.Equals(e.Type, type, StringComparison.OrdinalIgnoreCase) &&
+                    e.Content == content)
+                    .ToList();
+
+                if (matches.Count != 1)
+                    throw new InvalidOperationException("No (or multiple) matching record(s).");
+
+                var match = matches[0];
+                var updated = new DnsEntry
+                {
+                    Name = match.Name,
+                    Type = match.Type,
+                    Content = newContent ?? match.Content,
+                    Expire = newExpire is int ne ? ne : match.Expire
+                };
+
+                await api.Domains.UpdateSingleDnsEntryAsync(
+                    domain,
+                    new UpdateSingleDnsEntryRequest { DnsEntry = updated });
+
+                Console.WriteLine(
+                    $"Updated {updated.Type} {updated.Name} -> {updated.Content} TTL {(int)updated.Expire}");
+                return 0;
+            }
+            catch (Exception ex)
+            {
+                return ErrorHandler.Handle(ex, parse.GetValue(GlobalOptions.Verbose));
+            }
+        });
+
+        return cmd;
+    }
+}

@@ -70,8 +70,13 @@ public static class DnsDeleteCommand
                 if (matches.Count == 0)
                     throw new InvalidOperationException("No matching record.");
                 if (matches.Count > 1)
-                    throw new InvalidOperationException(
-                        $"Ambiguous: {matches.Count} records match. Add --expire to disambiguate.");
+                {
+                    Console.Error.WriteLine($"Ambiguous: {matches.Count} records match:");
+                    foreach (var m in matches)
+                        Console.Error.WriteLine(
+                            $"  {m.Type}\t{m.Name}\t{(int)m.Expire}\t{m.Content}");
+                    throw new InvalidOperationException("Add --expire to disambiguate.");
+                }
 
                 var match = matches[0];
                 await api.Domains.RemoveDnsEntryDomainAsync(

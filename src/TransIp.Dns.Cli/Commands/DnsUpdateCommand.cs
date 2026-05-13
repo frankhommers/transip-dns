@@ -27,6 +27,10 @@ public static class DnsUpdateCommand
             Required = true,
             Description = "Current record content to match."
         };
+        var expireOpt = new Option<int?>("--expire")
+        {
+            Description = "Match exact TTL (only needed for disambiguation)."
+        };
         var newContentOpt = new Option<string?>("--new-content")
         {
             Description = "New content value."
@@ -41,6 +45,7 @@ public static class DnsUpdateCommand
         cmd.Options.Add(nameOpt);
         cmd.Options.Add(typeOpt);
         cmd.Options.Add(contentOpt);
+        cmd.Options.Add(expireOpt);
         cmd.Options.Add(newContentOpt);
         cmd.Options.Add(newExpireOpt);
 
@@ -66,6 +71,7 @@ public static class DnsUpdateCommand
                 var name = parse.GetValue(nameOpt)!;
                 var type = parse.GetValue(typeOpt)!;
                 var content = parse.GetValue(contentOpt)!;
+                var expire = parse.GetValue(expireOpt);
 
                 var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain);
                 var entries = DnsEntryReader.Read(response);
@@ -73,11 +79,20 @@ public static class DnsUpdateCommand
                 var matches = entries.Where(e =>
                     e.Name == name &&
                     string.Equals(e.Type, type, StringComparison.OrdinalIgnoreCase) &&
-                    e.Content == content)
+                    e.Content == content &&
+                    (expire is null || (int)e.Expire == expire))
                     .ToList();
 
-                if (matches.Count != 1)
-                    throw new InvalidOperationException("No (or multiple) matching record(s).");
+                if (matches.Count == 0)
+                    throw new InvalidOperationException("No matching record.");
+                if (matches.Count > 1)
+                {
+                    Console.Error.WriteLine($"Ambiguous: {matches.Count} records match:");
+                    foreach (var m in matches)
+                        Console.Error.WriteLine(
+                            $"  {m.Type}\t{m.Name}\t{(int)m.Expire}\t{m.Content}");
+                    throw new InvalidOperationException("Add --expire to disambiguate.");
+                }
 
                 var match = matches[0];
                 var updated = new DnsEntry

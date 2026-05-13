@@ -7,5 +7,6 @@ GlobalOptions.AttachTo(root);
 root.Subcommands.Add(DomainsListCommand.Build());
 root.Subcommands.Add(DnsListCommand.Build());
 root.Subcommands.Add(DnsAddCommand.Build());
+root.Subcommands.Add(DnsDeleteCommand.Build());
 
 return await root.Parse(args).InvokeAsync();

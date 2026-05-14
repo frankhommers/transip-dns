@@ -19,9 +19,16 @@ control panel. Provide them via flags or environment variables:
 
 Other global options:
 
-- `--label`        token label (default `transip-dns-cli`)
-- `--expiration`   token lifetime (default `30 minutes`)
-- `--verbose`      print stack traces on error
+- `--label` — token label, must be unique per active token. Default is
+  auto-generated with a timestamp suffix (e.g. `transip-dns-cli-20260514174538123`).
+- `--expiration` — token lifetime, default `30 minutes`.
+- `--global-key` — request a token usable from any IP. Without this, the token
+  is bound to the IP that requested it; if your account uses IP whitelisting and
+  your address is not whitelisted you will get
+  `Remote IP is not authorized for this request`.
+- `--read-only` — request a read-only token (rejects mutating endpoints).
+  Default is full access; opt in for safety.
+- `--verbose` — Debug-level SDK logging and full stack traces on error.
 
 ## Commands
 
@@ -53,14 +60,19 @@ Match on the current (`--name --type --content`); change content and/or TTL.
       --name www --type A --content 5.6.7.8
 
 If multiple records match (same name+type+content but different TTL), add
-`--expire <ttl>` to disambiguate.
+`--expire <ttl>` to disambiguate. Both `delete` and `update` then list the
+matches on stderr so you can pick one.
 
 ## Notes
 
-- TransIP records have no IDs; updates and deletes match by tuple (name, type, content).
+- TransIP records have no IDs; updates and deletes match by tuple
+  (name, type, content).
 - Two records with identical (name, type, content) are not allowed by the API.
-  Round-robin DNS uses multiple records with the same name/type but different content.
+  Round-robin DNS uses multiple records with the same name/type but different
+  content.
 - Exit codes: `0` success, `1` user/validation error, `2` API error.
+- `--verbose` prints the full `ApiException.ResponseBody` on failure (e.g. the
+  exact reason behind a 401 or 422).
 
 ## License
 

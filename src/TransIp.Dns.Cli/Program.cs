@@ -1,8 +1,14 @@
 ﻿using System.CommandLine;
+using System.Globalization;
 using TransIp.Dns.Cli.Commands;
 using TransIp.Dns.Cli.Infrastructure;
 
-var root = new RootCommand("TransIP DNS record CRUD.");
+Thread.CurrentThread.CurrentCulture = CultureInfo.InvariantCulture;
+Thread.CurrentThread.CurrentUICulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentCulture = CultureInfo.InvariantCulture;
+CultureInfo.DefaultThreadCurrentUICulture = CultureInfo.InvariantCulture;
+
+RootCommand root = new("TransIP DNS record CRUD.");
 GlobalOptions.AttachTo(root);
 root.Subcommands.Add(DomainsListCommand.Build());
 root.Subcommands.Add(DnsListCommand.Build());

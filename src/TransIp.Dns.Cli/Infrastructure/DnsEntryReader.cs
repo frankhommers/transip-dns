@@ -5,23 +5,21 @@ namespace TransIp.Dns.Cli.Infrastructure;
 
 public static class DnsEntryReader
 {
-    public static List<DnsEntry> Read(JsonElement response)
-    {
-        var result = new List<DnsEntry>();
-        if (!response.TryGetProperty("dnsEntries", out var arr)
-            || arr.ValueKind != JsonValueKind.Array)
-            return result;
+  public static List<DnsEntry> Read(JsonElement response)
+  {
+    List<DnsEntry> result = new();
+    if (!response.TryGetProperty("dnsEntries", out JsonElement arr)
+        || arr.ValueKind != JsonValueKind.Array)
+      return result;
 
-        foreach (var e in arr.EnumerateArray())
-        {
-            result.Add(new DnsEntry
-            {
-                Name = e.TryGetProperty("name", out var n) ? n.GetString() ?? "" : "",
-                Type = e.TryGetProperty("type", out var t) ? t.GetString() ?? "" : "",
-                Content = e.TryGetProperty("content", out var c) ? c.GetString() ?? "" : "",
-                Expire = e.TryGetProperty("expire", out var ex) ? ex.GetDecimal() : 0m
-            });
-        }
-        return result;
-    }
+    foreach (JsonElement e in arr.EnumerateArray())
+      result.Add(new DnsEntry
+      {
+        Name = e.TryGetProperty("name", out JsonElement n) ? n.GetString() ?? "" : "",
+        Type = e.TryGetProperty("type", out JsonElement t) ? t.GetString() ?? "" : "",
+        Content = e.TryGetProperty("content", out JsonElement c) ? c.GetString() ?? "" : "",
+        Expire = e.TryGetProperty("expire", out JsonElement ex) ? ex.GetDecimal() : 0m
+      });
+    return result;
+  }
 }

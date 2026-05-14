@@ -1,58 +1,61 @@
 using System.CommandLine;
+using System.Text.Json;
+using Apigen.TransIp.Client;
+using Apigen.TransIp.Models;
 using TransIp.Dns.Cli.Infrastructure;
 
 namespace TransIp.Dns.Cli.Commands;
 
 public static class DnsListCommand
 {
-    public static Command Build()
+  public static Command Build()
+  {
+    Argument<string> domainArg = new("domain")
     {
-        var domainArg = new Argument<string>("domain")
-        {
-            Description = "Domain name, e.g. example.nl"
-        };
-        var typeOption = new Option<string?>("--type")
-        {
-            Description = "Filter by record type (A, AAAA, CNAME, MX, TXT, ...)"
-        };
+      Description = "Domain name, e.g. example.nl"
+    };
+    Option<string?> typeOption = new("--type")
+    {
+      Description = "Filter by record type (A, AAAA, CNAME, MX, TXT, ...)"
+    };
 
-        var cmd = new Command("list", "List DNS records for a domain.");
-        cmd.Arguments.Add(domainArg);
-        cmd.Options.Add(typeOption);
+    Command cmd = new("list", "List DNS records for a domain.");
+    cmd.Arguments.Add(domainArg);
+    cmd.Options.Add(typeOption);
 
-        cmd.SetAction(async (parse, ct) =>
-        {
-            try
-            {
-                var auth = AuthOptions.From(parse);
-                using var api = ClientFactory.Create(auth);
-                var domain = parse.GetValue(domainArg)!;
-                var filter = parse.GetValue(typeOption);
+    cmd.SetAction(async (parse, ct) =>
+    {
+      try
+      {
+        AuthOptions auth = AuthOptions.From(parse);
+        using TransIpApiClient api = ClientFactory.Create(auth);
+        string domain = parse.GetValue(domainArg)!;
+        string? filter = parse.GetValue(typeOption);
 
-                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
-                var entries = DnsEntryReader.Read(response);
+        JsonElement response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
+        List<DnsEntry> entries = DnsEntryReader.Read(response);
 
-                if (!string.IsNullOrWhiteSpace(filter))
-                    entries = entries
-                        .Where(e => string.Equals(
-                            e.Type, filter, StringComparison.OrdinalIgnoreCase))
-                        .ToList();
+        if (!string.IsNullOrWhiteSpace(filter))
+          entries = entries
+            .Where(e => string.Equals(
+              e.Type, filter, StringComparison.OrdinalIgnoreCase))
+            .ToList();
 
-                TableWriter.Write(
-                    new[] { "Name", "Type", "Expire", "Content" },
-                    entries.Select(e => (IReadOnlyList<string>)new[]
-                    {
-                        e.Name ?? "", e.Type ?? "",
-                        ((int)e.Expire).ToString(),
-                        e.Content ?? ""
-                    }));
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                return ErrorHandler.Handle(ex, parse.GetValue(GlobalOptions.Verbose));
-            }
-        });
-        return cmd;
-    }
+        TableWriter.Write(
+          new[] { "Name", "Type", "Expire", "Content" },
+          entries.Select(e => (IReadOnlyList<string>)new[]
+          {
+            e.Name ?? "", e.Type ?? "",
+            ((int)e.Expire).ToString(),
+            e.Content ?? ""
+          }));
+        return 0;
+      }
+      catch (Exception ex)
+      {
+        return ErrorHandler.Handle(ex, parse.GetValue(GlobalOptions.Verbose));
+      }
+    });
+    return cmd;
+  }
 }

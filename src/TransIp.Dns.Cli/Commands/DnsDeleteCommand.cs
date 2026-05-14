@@ -1,4 +1,6 @@
 using System.CommandLine;
+using System.Text.Json;
+using Apigen.TransIp.Client;
 using Apigen.TransIp.Models;
 using TransIp.Dns.Cli.Infrastructure;
 
@@ -6,89 +8,89 @@ namespace TransIp.Dns.Cli.Commands;
 
 public static class DnsDeleteCommand
 {
-    public static Command Build()
+  public static Command Build()
+  {
+    Argument<string> domainArg = new("domain")
     {
-        var domainArg = new Argument<string>("domain")
+      Description = "Domain name, e.g. example.nl"
+    };
+    Option<string> nameOpt = new("--name")
+    {
+      Required = true,
+      Description = "Record name to match."
+    };
+    Option<string> typeOpt = new("--type")
+    {
+      Required = true,
+      Description = "Record type to match."
+    };
+    Option<string> contentOpt = new("--content")
+    {
+      Required = true,
+      Description = "Record content to match."
+    };
+    Option<int?> expireOpt = new("--expire")
+    {
+      Description = "Match exact TTL (only needed for disambiguation)."
+    };
+
+    Command cmd = new("delete", "Delete a DNS record.");
+    cmd.Arguments.Add(domainArg);
+    cmd.Options.Add(nameOpt);
+    cmd.Options.Add(typeOpt);
+    cmd.Options.Add(contentOpt);
+    cmd.Options.Add(expireOpt);
+
+    cmd.SetAction(async (parse, ct) =>
+    {
+      try
+      {
+        AuthOptions auth = AuthOptions.From(parse);
+        using TransIpApiClient api = ClientFactory.Create(auth);
+
+        string domain = parse.GetValue(domainArg)!;
+        string name = parse.GetValue(nameOpt)!;
+        string type = parse.GetValue(typeOpt)!;
+        string content = parse.GetValue(contentOpt)!;
+        int? expire = parse.GetValue(expireOpt);
+
+        JsonElement response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
+        List<DnsEntry> entries = DnsEntryReader.Read(response);
+
+        List<DnsEntry> matches = entries.Where(e =>
+            e.Name == name &&
+            string.Equals(e.Type, type, StringComparison.OrdinalIgnoreCase) &&
+            e.Content == content &&
+            (expire is null || (int)e.Expire == expire))
+          .ToList();
+
+        if (matches.Count == 0)
+          throw new InvalidOperationException("No matching record.");
+        if (matches.Count > 1)
         {
-            Description = "Domain name, e.g. example.nl"
-        };
-        var nameOpt = new Option<string>("--name")
-        {
-            Required = true,
-            Description = "Record name to match."
-        };
-        var typeOpt = new Option<string>("--type")
-        {
-            Required = true,
-            Description = "Record type to match."
-        };
-        var contentOpt = new Option<string>("--content")
-        {
-            Required = true,
-            Description = "Record content to match."
-        };
-        var expireOpt = new Option<int?>("--expire")
-        {
-            Description = "Match exact TTL (only needed for disambiguation)."
-        };
+          Console.Error.WriteLine($"Ambiguous: {matches.Count} records match:");
+          foreach (DnsEntry m in matches)
+            Console.Error.WriteLine(
+              $"  {m.Type}\t{m.Name}\t{(int)m.Expire}\t{m.Content}");
+          throw new InvalidOperationException("Add --expire to disambiguate.");
+        }
 
-        var cmd = new Command("delete", "Delete a DNS record.");
-        cmd.Arguments.Add(domainArg);
-        cmd.Options.Add(nameOpt);
-        cmd.Options.Add(typeOpt);
-        cmd.Options.Add(contentOpt);
-        cmd.Options.Add(expireOpt);
+        DnsEntry match = matches[0];
+        await api.Domains.RemoveDnsEntryDomainAsync(
+          domain,
+          new RemoveDnsEntryDomainRequest { DnsEntry = match },
+          ct);
 
-        cmd.SetAction(async (parse, ct) =>
-        {
-            try
-            {
-                var auth = AuthOptions.From(parse);
-                using var api = ClientFactory.Create(auth);
+        Console.WriteLine(
+          $"Deleted {match.Type} {match.Name} -> {match.Content} TTL {(int)match.Expire}");
+        return 0;
+      }
+      catch (Exception ex)
+      {
+        return ErrorHandler.Handle(ex, parse.GetValue(GlobalOptions.Verbose));
+      }
+    });
 
-                var domain = parse.GetValue(domainArg)!;
-                var name = parse.GetValue(nameOpt)!;
-                var type = parse.GetValue(typeOpt)!;
-                var content = parse.GetValue(contentOpt)!;
-                var expire = parse.GetValue(expireOpt);
-
-                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
-                var entries = DnsEntryReader.Read(response);
-
-                var matches = entries.Where(e =>
-                    e.Name == name &&
-                    string.Equals(e.Type, type, StringComparison.OrdinalIgnoreCase) &&
-                    e.Content == content &&
-                    (expire is null || (int)e.Expire == expire))
-                    .ToList();
-
-                if (matches.Count == 0)
-                    throw new InvalidOperationException("No matching record.");
-                if (matches.Count > 1)
-                {
-                    Console.Error.WriteLine($"Ambiguous: {matches.Count} records match:");
-                    foreach (var m in matches)
-                        Console.Error.WriteLine(
-                            $"  {m.Type}\t{m.Name}\t{(int)m.Expire}\t{m.Content}");
-                    throw new InvalidOperationException("Add --expire to disambiguate.");
-                }
-
-                var match = matches[0];
-                await api.Domains.RemoveDnsEntryDomainAsync(
-                    domain,
-                    new RemoveDnsEntryDomainRequest { DnsEntry = match },
-                    ct);
-
-                Console.WriteLine(
-                    $"Deleted {match.Type} {match.Name} -> {match.Content} TTL {(int)match.Expire}");
-                return 0;
-            }
-            catch (Exception ex)
-            {
-                return ErrorHandler.Handle(ex, parse.GetValue(GlobalOptions.Verbose));
-            }
-        });
-
-        return cmd;
-    }
+    return cmd;
+  }
 }

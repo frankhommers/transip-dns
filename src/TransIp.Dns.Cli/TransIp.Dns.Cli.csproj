@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Apigen.TransIp.Client" Version="6.53.3" />
+    <PackageReference Include="Apigen.TransIp.Client" Version="6.53.4" />
     <PackageReference Include="System.CommandLine" Version="3.0.0-preview.4.26230.115" />
   </ItemGroup>
 

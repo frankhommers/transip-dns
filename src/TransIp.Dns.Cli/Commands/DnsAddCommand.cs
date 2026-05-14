@@ -68,7 +68,8 @@ public static class DnsAddCommand
 
                 await api.Domains.AddNewSingleDnsEntryDomainAsync(
                     domain,
-                    new AddNewSingleDnsEntryDomainRequest { DnsEntry = entry });
+                    new AddNewSingleDnsEntryDomainRequest { DnsEntry = entry },
+                    ct);
 
                 Console.WriteLine($"Added {type} {name} -> {content} TTL {expire}");
                 return 0;

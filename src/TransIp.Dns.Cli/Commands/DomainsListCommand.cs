@@ -24,7 +24,8 @@ public static class DomainsListCommand
 
                 using var api = ClientFactory.Create(auth);
 
-                JsonElement response = await api.Domains.ListAllDomainsAsync(new ListAllDomainsRequest());
+                JsonElement response = await api.Domains.ListAllDomainsAsync(
+                    new ListAllDomainsRequest(), ct);
                 if (response.TryGetProperty("domains", out var domainsArray))
                 {
                     foreach (var d in domainsArray.EnumerateArray())

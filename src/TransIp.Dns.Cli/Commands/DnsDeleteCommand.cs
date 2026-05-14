@@ -57,7 +57,7 @@ public static class DnsDeleteCommand
                 var content = parse.GetValue(contentOpt)!;
                 var expire = parse.GetValue(expireOpt);
 
-                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain);
+                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
                 var entries = DnsEntryReader.Read(response);
 
                 var matches = entries.Where(e =>
@@ -81,7 +81,8 @@ public static class DnsDeleteCommand
                 var match = matches[0];
                 await api.Domains.RemoveDnsEntryDomainAsync(
                     domain,
-                    new RemoveDnsEntryDomainRequest { DnsEntry = match });
+                    new RemoveDnsEntryDomainRequest { DnsEntry = match },
+                    ct);
 
                 Console.WriteLine(
                     $"Deleted {match.Type} {match.Name} -> {match.Content} TTL {(int)match.Expire}");

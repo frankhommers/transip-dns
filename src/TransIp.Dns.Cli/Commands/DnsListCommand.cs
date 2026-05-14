@@ -34,7 +34,7 @@ public static class DnsListCommand
                 var domain = parse.GetValue(domainArg)!;
                 var filter = parse.GetValue(typeOption);
 
-                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain);
+                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
                 var entries = DnsEntryReader.Read(response);
 
                 if (!string.IsNullOrWhiteSpace(filter))

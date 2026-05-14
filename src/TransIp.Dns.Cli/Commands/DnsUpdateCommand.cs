@@ -73,7 +73,7 @@ public static class DnsUpdateCommand
                 var content = parse.GetValue(contentOpt)!;
                 var expire = parse.GetValue(expireOpt);
 
-                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain);
+                var response = await api.Domains.ListAllDnsEntriesDomainAsync(domain, ct);
                 var entries = DnsEntryReader.Read(response);
 
                 var matches = entries.Where(e =>
@@ -105,7 +105,8 @@ public static class DnsUpdateCommand
 
                 await api.Domains.UpdateSingleDnsEntryAsync(
                     domain,
-                    new UpdateSingleDnsEntryRequest { DnsEntry = updated });
+                    new UpdateSingleDnsEntryRequest { DnsEntry = updated },
+                    ct);
 
                 Console.WriteLine(
                     $"Updated {updated.Type} {updated.Name} -> {updated.Content} TTL {(int)updated.Expire}");

@@ -1,3 +1,5 @@
+using System.CommandLine;
+
 namespace TransIp.Dns.Cli.Infrastructure;
 
 public sealed record AuthOptions(
@@ -5,17 +7,16 @@ public sealed record AuthOptions(
     string PrivateKeyPath,
     string Label,
     bool ReadOnly,
-    string Expiration)
+    string Expiration,
+    bool GlobalKey,
+    bool Verbose)
 {
-    public static AuthOptions Resolve(
-        string? login,
-        string? keyFile,
-        string label,
-        bool readOnly,
-        string expiration)
+    public static AuthOptions From(ParseResult parse)
     {
-        login ??= Environment.GetEnvironmentVariable("TRANSIP_LOGIN");
-        keyFile ??= Environment.GetEnvironmentVariable("TRANSIP_PRIVATE_KEY_PATH");
+        var login = parse.GetValue(GlobalOptions.Login)
+            ?? Environment.GetEnvironmentVariable("TRANSIP_LOGIN");
+        var keyFile = parse.GetValue(GlobalOptions.KeyFile)
+            ?? Environment.GetEnvironmentVariable("TRANSIP_PRIVATE_KEY_PATH");
 
         if (string.IsNullOrWhiteSpace(login))
             throw new InvalidOperationException(
@@ -27,6 +28,13 @@ public sealed record AuthOptions(
             throw new FileNotFoundException(
                 $"Private key file not found: {keyFile}", keyFile);
 
-        return new AuthOptions(login, keyFile, label, readOnly, expiration);
+        return new AuthOptions(
+            Login: login,
+            PrivateKeyPath: keyFile,
+            Label: parse.GetValue(GlobalOptions.Label)!,
+            ReadOnly: parse.GetValue(GlobalOptions.ReadOnly),
+            Expiration: parse.GetValue(GlobalOptions.Expiration)!,
+            GlobalKey: parse.GetValue(GlobalOptions.GlobalKey),
+            Verbose: parse.GetValue(GlobalOptions.Verbose));
     }
 }

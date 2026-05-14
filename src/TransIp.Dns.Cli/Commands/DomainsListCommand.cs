@@ -15,13 +15,7 @@ public static class DomainsListCommand
         {
             try
             {
-                var auth = AuthOptions.Resolve(
-                    parse.GetValue(GlobalOptions.Login),
-                    parse.GetValue(GlobalOptions.KeyFile),
-                    parse.GetValue(GlobalOptions.Label)!,
-                    readOnly: true,
-                    parse.GetValue(GlobalOptions.Expiration)!);
-
+                var auth = AuthOptions.From(parse);
                 using var api = ClientFactory.Create(auth);
 
                 JsonElement response = await api.Domains.ListAllDomainsAsync(

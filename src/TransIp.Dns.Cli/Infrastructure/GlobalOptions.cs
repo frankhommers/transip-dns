@@ -16,8 +16,8 @@ public static class GlobalOptions
 
     public static readonly Option<string> Label = new("--label")
     {
-        Description = "Token label.",
-        DefaultValueFactory = _ => "transip-dns-cli"
+        Description = "Token label (must be unique per active token).",
+        DefaultValueFactory = _ => $"transip-dns-cli-{DateTime.UtcNow:yyyyMMddHHmmssfff}"
     };
 
     public static readonly Option<string> Expiration = new("--expiration")
@@ -26,9 +26,19 @@ public static class GlobalOptions
         DefaultValueFactory = _ => "30 minutes"
     };
 
+    public static readonly Option<bool> GlobalKey = new("--global-key")
+    {
+        Description = "Allow token use from any IP (bypasses TransIP IP binding)."
+    };
+
+    public static readonly Option<bool> ReadOnly = new("--read-only")
+    {
+        Description = "Request a read-only token (rejects all mutating endpoints)."
+    };
+
     public static readonly Option<bool> Verbose = new("--verbose")
     {
-        Description = "Print stack traces and raw responses on error."
+        Description = "Enable Debug-level logging and full stack traces on error."
     };
 
     public static void AttachTo(Command cmd)
@@ -37,6 +47,8 @@ public static class GlobalOptions
         cmd.Options.Add(KeyFile);
         cmd.Options.Add(Label);
         cmd.Options.Add(Expiration);
+        cmd.Options.Add(GlobalKey);
+        cmd.Options.Add(ReadOnly);
         cmd.Options.Add(Verbose);
     }
 }

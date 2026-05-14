@@ -43,12 +43,7 @@ public static class DnsDeleteCommand
         {
             try
             {
-                var auth = AuthOptions.Resolve(
-                    parse.GetValue(GlobalOptions.Login),
-                    parse.GetValue(GlobalOptions.KeyFile),
-                    parse.GetValue(GlobalOptions.Label)!,
-                    readOnly: false,
-                    parse.GetValue(GlobalOptions.Expiration)!);
+                var auth = AuthOptions.From(parse);
                 using var api = ClientFactory.Create(auth);
 
                 var domain = parse.GetValue(domainArg)!;

@@ -59,12 +59,7 @@ public static class DnsUpdateCommand
                     throw new InvalidOperationException(
                         "At least one of --new-content or --new-expire must be specified.");
 
-                var auth = AuthOptions.Resolve(
-                    parse.GetValue(GlobalOptions.Login),
-                    parse.GetValue(GlobalOptions.KeyFile),
-                    parse.GetValue(GlobalOptions.Label)!,
-                    readOnly: false,
-                    parse.GetValue(GlobalOptions.Expiration)!);
+                var auth = AuthOptions.From(parse);
                 using var api = ClientFactory.Create(auth);
 
                 var domain = parse.GetValue(domainArg)!;

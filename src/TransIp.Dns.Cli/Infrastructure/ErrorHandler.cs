@@ -1,3 +1,5 @@
+using Apigen.TransIp.Client;
+
 namespace TransIp.Dns.Cli.Infrastructure;
 
 public static class ErrorHandler
@@ -8,7 +10,23 @@ public static class ErrorHandler
             ex is InvalidOperationException
               or FileNotFoundException
               or ArgumentException;
-        Console.Error.WriteLine(verbose ? ex.ToString() : ex.Message);
+
+        if (verbose)
+        {
+            Console.Error.WriteLine(ex);
+        }
+        else if (ex is ApiException api)
+        {
+            var body = string.IsNullOrWhiteSpace(api.ResponseBody)
+                ? "(no body)"
+                : api.ResponseBody;
+            Console.Error.WriteLine($"{api.Message}: {body}");
+        }
+        else
+        {
+            Console.Error.WriteLine(ex.Message);
+        }
+
         return isUserError ? 1 : 2;
     }
 }

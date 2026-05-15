@@ -100,10 +100,41 @@ public static class DnsUpdateCommand
           Expire = newExpire is int ne ? ne : match.Expire
         };
 
-        await api.Domains.UpdateSingleDnsEntryAsync(
-          domain,
-          new UpdateSingleDnsEntryRequest { DnsEntry = updated },
-          ct);
+        bool ttlChanges = (int)updated.Expire != (int)match.Expire;
+
+        if (ttlChanges)
+        {
+          // TransIP PATCH /domains/{name}/dns matches existing records on
+          // (name, type, expire) and only mutates content; it cannot change
+          // TTL. Fall back to remove+add. Brief window where the record is
+          // absent; rolled back on failure.
+          await api.Domains.RemoveDnsEntryDomainAsync(
+            domain,
+            new RemoveDnsEntryDomainRequest { DnsEntry = match },
+            ct);
+          try
+          {
+            await api.Domains.AddNewSingleDnsEntryDomainAsync(
+              domain,
+              new AddNewSingleDnsEntryDomainRequest { DnsEntry = updated },
+              ct);
+          }
+          catch
+          {
+            await api.Domains.AddNewSingleDnsEntryDomainAsync(
+              domain,
+              new AddNewSingleDnsEntryDomainRequest { DnsEntry = match },
+              CancellationToken.None);
+            throw;
+          }
+        }
+        else
+        {
+          await api.Domains.UpdateSingleDnsEntryAsync(
+            domain,
+            new UpdateSingleDnsEntryRequest { DnsEntry = updated },
+            ct);
+        }
 
         Console.WriteLine(
           $"Updated {updated.Type} {updated.Name} -> {updated.Content} TTL {(int)updated.Expire}");

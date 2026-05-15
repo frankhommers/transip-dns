@@ -1,11 +1,33 @@
 # TransIp.Dns.Cli
 
+[![CI](https://github.com/frankhommers/transip-dns/actions/workflows/ci.yml/badge.svg)](https://github.com/frankhommers/transip-dns/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Small .NET 10 console app for CRUD operations on TransIP DNS records, built on
 [`Apigen.TransIp.Client`](https://www.nuget.org/packages/Apigen.TransIp.Client).
 
-## Build
+## Run
+
+### Docker (recommended)
+
+Multi-arch image (amd64 + arm64) is published to GitHub Container Registry.
+
+    docker run --rm \
+      -v /path/to/transip.pem:/keys/transip.pem:ro \
+      ghcr.io/frankhommers/transip-dns:latest \
+      --login YOUR_LOGIN --key-file /keys/transip.pem --global-key \
+      domains
+
+Available tags:
+- `latest` — most recent main branch build
+- `vX.Y.Z` and `X.Y` — released versions
+- `main` — latest main branch (rolling)
+- `sha-<short>` — pinned commit
+
+### From source
 
     dotnet build
+    dotnet run --project src/TransIp.Dns.Cli -- --help
 
 ## Authentication
 
@@ -76,4 +98,4 @@ matches on stderr so you can pick one.
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

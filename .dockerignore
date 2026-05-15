@@ -1,0 +1,11 @@
+**/bin
+**/obj
+**/.vs
+**/.idea
+**/.git
+.github
+docs
+*.pem
+.agent-session-logs
+README.md
+LICENSE

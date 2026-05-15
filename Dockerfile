@@ -20,4 +20,6 @@ LABEL org.opencontainers.image.source="https://github.com/frankhommers/transip-d
       org.opencontainers.image.description="TransIP DNS record CRUD CLI." \
       org.opencontainers.image.licenses="MIT"
 
+USER app
+
 ENTRYPOINT ["dotnet", "/app/TransIp.Dns.Cli.dll"]

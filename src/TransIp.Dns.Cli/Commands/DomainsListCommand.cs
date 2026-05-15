@@ -19,8 +19,7 @@ public static class DomainsListCommand
         AuthOptions auth = AuthOptions.From(parse);
         using TransIpApiClient api = ClientFactory.Create(auth);
 
-        JsonElement response = await api.Domains.ListAllDomainsAsync(
-          new ListAllDomainsRequest(), ct);
+        JsonElement response = await api.Domains.ListAllDomainsAsync(new(), ct);
         if (response.TryGetProperty("domains", out JsonElement domainsArray))
           foreach (JsonElement d in domainsArray.EnumerateArray())
             if (d.TryGetProperty("name", out JsonElement name))

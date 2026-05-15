@@ -5,6 +5,7 @@ obj/
 .idea/
 *.pem
 .agent-session-logs/
+docs/
 
 
 ### Created by https://www.gitignore.io

@@ -42,13 +42,14 @@ public static class DnsListCommand
             .ToList();
 
         TableWriter.Write(
-          new[] { "Name", "Type", "Expire", "Content" },
-          entries.Select(e => (IReadOnlyList<string>)new[]
-          {
-            e.Name ?? "", e.Type ?? "",
+          ["Name", "Type", "Expire", "Content"],
+          entries.Select(e => (IReadOnlyList<string>)
+          [
+            e.Name ?? "",
+            e.Type ?? "",
             ((int)e.Expire).ToString(),
             e.Content ?? ""
-          }));
+          ]));
         return 0;
       }
       catch (Exception ex)
